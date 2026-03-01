@@ -33,7 +33,6 @@ import           Data.Typeable
 import           Data.Memory.PtrMethods
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat     (unsafeDoIO)
-import           Data.Memory.Internal.Imports
 import           Data.ByteArray.Types
 import           Foreign.Storable
 

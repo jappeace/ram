@@ -25,7 +25,6 @@ import           GHC.Ptr
 import           Data.Semigroup
 import           Data.Foldable (toList)
 import           Data.Memory.PtrMethods
-import           Data.Memory.Internal.Imports
 import           Data.Memory.Internal.CompatPrim
 import           Data.Memory.Internal.Compat      (unsafeDoIO)
 import           Data.ByteArray.Types

@@ -23,10 +23,6 @@ import           Foreign.ForeignPtr (withForeignPtr)
 
 import           Data.Memory.PtrMethods (memCopy)
 
-
-import           Data.Proxy (Proxy(..))
-import           Data.Word (Word8)
-
 import Prelude hiding (length)
 
 -- | Class to Access size properties and data of a ByteArray
