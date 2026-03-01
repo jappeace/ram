@@ -27,13 +27,13 @@ Maintainer:          hi@jappie.me
 Category:            memory
 Stability:           experimental
 Build-Type:          Simple
-Homepage:            https://github.com/vincenthz/hs-memory
-Bug-Reports:         https://github.com/vincenthz/hs-memory/issues
+Homepage:            https://github.com/jappeace/ram
+Bug-Reports:         https://github.com/jappeace/ram/issues
 extra-doc-files:     README.md CHANGELOG.md
 
 source-repository head
   type: git
-  location: https://github.com/vincenthz/hs-memory
+  location: https://github.com/jappeace/ram
 
 Flag support_bytestring
   Description:       add non-orphan bytearray support for bytestring
