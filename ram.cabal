@@ -3,6 +3,9 @@ Name:                ram
 version:             0.19.0
 Synopsis:            memory and related abstraction stuff
 Description:
+    This is a fork of memory. It's open to accept changes from anyone,
+    and aims to use existing well maintained libraries as much as possible.
+
     Chunk of memory, polymorphic byte array management and manipulation
      
     * A polymorphic byte array abstraction and function similar to strict ByteString.
@@ -20,7 +23,7 @@ License:             BSD-3-Clause
 License-file:        LICENSE
 Copyright:           Vincent Hanquez <vincent@snarc.org>
 Author:              Vincent Hanquez <vincent@snarc.org>
-Maintainer:          vincent@snarc.org, Nicolas Di Prima <nicolas@primetype.co.uk>
+Maintainer:          hi@jappie.me
 Category:            memory
 Stability:           experimental
 Build-Type:          Simple
