@@ -16,10 +16,17 @@ module Data.ByteArray.Encoding
 import           Data.ByteArray.Types
 import qualified Data.ByteArray.Types        as B
 import qualified Data.ByteArray.Methods      as B
-import           Data.Memory.Internal.Compat
-import           Data.Memory.Encoding.Base16
-import           Data.Memory.Encoding.Base32
-import           Data.Memory.Encoding.Base64
+import qualified Data.ByteString             as BS
+import qualified Data.ByteString.Base16      as B16
+import qualified Data.ByteString.Base32      as B32
+import qualified Data.ByteString.Base64      as B64
+import qualified Data.ByteString.Base64.URL  as B64URL
+import           Data.Base16.Types           (extractBase16)
+import           Data.Base64.Types           (extractBase64)
+import qualified Data.Text                   as T
+import           Data.Memory.Encoding.Base64 (toBase64OpenBSD, fromBase64OpenBSD,
+                                              unBase64LengthUnpadded)
+import           Data.Memory.Internal.Compat (unsafeDoIO)
 
 -- $setup
 -- >>> :set -XOverloadedStrings
@@ -74,27 +81,20 @@ data Base = Base16            -- ^ similar to hexadecimal
 -- "Zm9vYmFy"
 --
 convertToBase :: (ByteArrayAccess bin, ByteArray bout) => Base -> bin -> bout
-convertToBase base b = case base of
-    Base16 -> doConvert (binLength * 2) toHexadecimal
-    Base32 -> let (q,r)  = binLength `divMod` 5
-                  outLen = 8 * (if r == 0 then q else q + 1)
-               in doConvert outLen toBase32
-    Base64 -> doConvert base64Length toBase64
-    -- Base64URL         -> doConvert base64Length (toBase64URL True)
-    Base64URLUnpadded -> doConvert base64UnpaddedLength (toBase64URL False)
-    Base64OpenBSD     -> doConvert base64UnpaddedLength toBase64OpenBSD
-  where
-    binLength = B.length b
-
-    base64Length = let (q,r) = binLength `divMod` 3
-                    in 4 * (if r == 0 then q else q+1)
-
-    base64UnpaddedLength = let (q,r) = binLength `divMod` 3
-                            in 4 * q + (if r == 0 then 0 else r+1)
-    doConvert l f =
-        B.unsafeCreate l $ \bout ->
-        B.withByteArray b     $ \bin  ->
-            f bout bin binLength
+convertToBase base b =
+    let bs = B.convert b :: BS.ByteString
+    in case base of
+        Base16            -> B.convert $ extractBase16 (B16.encodeBase16' bs)
+        Base32            -> B.convert $ B32.encodeBase32' bs
+        Base64            -> B.convert $ extractBase64 (B64.encodeBase64' bs)
+        Base64URLUnpadded -> B.convert $ extractBase64 (B64URL.encodeBase64Unpadded' bs)
+        Base64OpenBSD     ->
+            let binLength = B.length b
+                (q, r)   = binLength `divMod` 3
+                outLen   = 4 * q + (if r == 0 then 0 else r + 1)
+            in B.unsafeCreate outLen $ \bout ->
+               withByteArray b $ \bin ->
+                   toBase64OpenBSD bout bin binLength
 
 -- | Try to decode some bytes from the equivalent representation in a specific 'Base'.
 --
@@ -108,55 +108,27 @@ convertToBase base b = case base of
 -- Trying to decode invalid data will return an error string:
 --
 -- >>> convertFromBase Base64 ("!!!" :: ByteString) :: Either String ByteString
--- Left "base64: input: invalid length"
+-- Left "Base64-encoded bytestring requires padding"
 --
 convertFromBase :: (ByteArrayAccess bin, ByteArray bout) => Base -> bin -> Either String bout
-convertFromBase Base16 b
-    | odd (B.length b) = Left "base16: input: invalid length"
-    | otherwise        = unsafeDoIO $ do
-        (ret, out) <-
-            B.allocRet (B.length b `div` 2) $ \bout ->
-            B.withByteArray b               $ \bin  ->
-                fromHexadecimal bout bin (B.length b)
-        case ret of
-            Nothing  -> return $ Right out
-            Just ofs -> return $ Left ("base16: input: invalid encoding at offset: " ++ show ofs)
-convertFromBase Base32 b = unsafeDoIO $
-    withByteArray b $ \bin -> do
-        mDstLen <- unBase32Length bin (B.length b)
-        case mDstLen of
-            Nothing     -> return $ Left "base32: input: invalid length"
-            Just dstLen -> do
-                (ret, out) <- B.allocRet dstLen $ \bout -> fromBase32 bout bin (B.length b)
-                case ret of
-                    Nothing  -> return $ Right out
-                    Just ofs -> return $ Left ("base32: input: invalid encoding at offset: " ++ show ofs)
-convertFromBase Base64 b = unsafeDoIO $
-    withByteArray b $ \bin -> do
-        mDstLen <- unBase64Length bin (B.length b)
-        case mDstLen of
-            Nothing     -> return $ Left "base64: input: invalid length"
-            Just dstLen -> do
-                (ret, out) <- B.allocRet dstLen $ \bout -> fromBase64 bout bin (B.length b)
-                case ret of
-                    Nothing  -> return $ Right out
-                    Just ofs -> return $ Left ("base64: input: invalid encoding at offset: " ++ show ofs)
-convertFromBase Base64URLUnpadded b = unsafeDoIO $
-    withByteArray b $ \bin ->
-        case unBase64LengthUnpadded (B.length b) of
-            Nothing     -> return $ Left "base64URL unpadded: input: invalid length"
-            Just dstLen -> do
-                (ret, out) <- B.allocRet dstLen $ \bout -> fromBase64URLUnpadded bout bin (B.length b)
-                case ret of
-                    Nothing  -> return $ Right out
-                    Just ofs -> return $ Left ("base64URL unpadded: input: invalid encoding at offset: " ++ show ofs)
-convertFromBase Base64OpenBSD b = unsafeDoIO $
-    withByteArray b $ \bin ->
-        case unBase64LengthUnpadded (B.length b) of
-            Nothing     -> return $ Left "base64 unpadded: input: invalid length"
-            Just dstLen -> do
-                (ret, out) <- B.allocRet dstLen $ \bout -> fromBase64OpenBSD bout bin (B.length b)
-                case ret of
-                    Nothing  -> return $ Right out
-                    Just ofs -> return $ Left ("base64 unpadded: input: invalid encoding at offset: " ++ show ofs)
+convertFromBase base b =
+    let bs  = B.convert b :: BS.ByteString
+        run = fmap B.convert . mapLeft T.unpack
+    in case base of
+        Base16            -> run $ B16.decodeBase16Untyped bs
+        Base32            -> run $ B32.decodeBase32 bs
+        Base64            -> run $ B64.decodeBase64Untyped bs
+        Base64URLUnpadded -> run $ B64URL.decodeBase64UnpaddedUntyped bs
+        Base64OpenBSD     -> unsafeDoIO $
+            withByteArray b $ \bin ->
+                case unBase64LengthUnpadded (B.length b) of
+                    Nothing     -> return $ Left "base64 unpadded: input: invalid length"
+                    Just dstLen -> do
+                        (ret, out) <- B.allocRet dstLen $ \bout -> fromBase64OpenBSD bout bin (B.length b)
+                        return $ case ret of
+                            Nothing  -> Right out
+                            Just ofs -> Left ("base64 unpadded: input: invalid encoding at offset: " ++ show ofs)
 
+mapLeft :: (a -> b) -> Either a c -> Either b c
+mapLeft f (Left a)  = Left (f a)
+mapLeft _ (Right c) = Right c

@@ -1,3 +1,20 @@
+## 0.21.0
+
++ `Data.ByteArray.Encoding`: replaced custom Base16/Base32/Base64 encode/decode
+  with `base16`, `base32`, and `base64` library calls. Input is converted to
+  `ByteString` via `B.convert`, the library function is applied, and the result
+  is converted back. `Base64OpenBSD` retains its custom implementation (no
+  library equivalent exists).
++ `Data.ByteArray.Bytes`: replaced low-level `GHC.Prim` `MutableByteArray#`
+  implementation with `newtype Bytes = Bytes ByteString`. Both use GHC's pinned
+  allocator; `ByteString` already implements `ByteArrayAccess` / `ByteArray`.
++ `Data.Memory.Hash.FNV`: replaced `readWord8OffAddr#` (GHC.Prim) with
+  `Foreign.Storable.peekByteOff` — portable and equivalent.
++ `Data.Memory.Internal.CompatPrim64`: deleted (was entirely unreferenced).
++ New dependencies: `base16 >=1.0 && <2`, `base32 >=0.4 && <1`,
+  `base64 >=1.0 && <2`, `text >=1.0 && <3`.
++ Net reduction: ~350 lines removed.
+
 ## 0.20.1
 + Remove `WITH_BYTESTRING_SUPPORT` CPP flag. `ByteString` instances for
   `ByteArrayAccess` and `ByteArray` are now always compiled in, since
