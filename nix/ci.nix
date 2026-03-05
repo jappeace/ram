@@ -1,0 +1,3 @@
+{
+  ram = import ../default.nix {};
+}
