@@ -1,6 +1,6 @@
 cabal-version:   3.0
 name:            ram
-version:         0.21.1
+version:         0.22.0
 synopsis:        memory and related abstraction stuff
 description:
   This is a fork of memory. It's open to accept changes from anyone,

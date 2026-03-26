@@ -1,3 +1,8 @@
+## 0.22.0
++ Added `map :: (ByteArrayAccess ba, ByteArray ba) => (Word8 -> Word8) -> ba -> ba`
+  to `Data.ByteArray.Methods` (re-exported via `Data.ByteArray`).
+  Applies a function to each byte of a byte array. (closes #5)
+
 ## 0.21.1
 + Reverted 0.21.0 changes: restored custom Base16/Base32/Base64 encode/decode,
   the GHC.Prim-based `Bytes` implementation, and `readWord8OffAddr#`-based FNV

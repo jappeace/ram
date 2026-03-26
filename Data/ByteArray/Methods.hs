@@ -39,6 +39,7 @@ module Data.ByteArray.Methods
     , all
     , append
     , concat
+    , map
     ) where
 
 import           Data.ByteArray.Types
@@ -49,7 +50,7 @@ import           Data.Monoid
 import           Foreign.Storable
 import           Foreign.Ptr
 
-import           Prelude hiding (length, take, drop, span, reverse, concat, replicate, splitAt, null, pred, last, any, all)
+import           Prelude hiding (length, take, drop, span, reverse, concat, replicate, splitAt, null, pred, last, any, all, map)
 import qualified Prelude
 
 
@@ -200,7 +201,7 @@ reverse bs = unsafeCreate n $ \d -> withByteArray bs $ \s -> memReverse d s n
 concat :: (ByteArrayAccess bin, ByteArray bout) => [bin] -> bout
 concat l = unsafeCreate retLen (loopCopy l)
   where
-    retLen = sum $ map length l
+    retLen = sum $ Prelude.map length l
 
     loopCopy []     _   = return ()
     loopCopy (x:xs) dst = do
@@ -295,6 +296,19 @@ any f b
 -- | Check if all elements of a byte array satisfy a predicate
 all :: (ByteArrayAccess ba) => (Word8 -> Bool) -> ba -> Bool
 all f b = not (any (not . f) b)
+
+-- | Map a function over each byte of a bytearray
+map :: (ByteArrayAccess ba, ByteArray ba) => (Word8 -> Word8) -> ba -> ba
+map f ba = copyAndFreeze ba $ loop 0
+  where
+    len = length ba
+    loop i ptr
+        | i == len  = return ()
+        | otherwise = do
+            let ptr' = ptr `plusPtr` i
+            x <- peek ptr'
+            poke ptr' $ f x
+            loop (i + 1) ptr
 
 -- | Convert a bytearray to another type of bytearray
 convert :: (ByteArrayAccess bin, ByteArray bout) => bin -> bout

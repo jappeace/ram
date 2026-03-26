@@ -248,4 +248,8 @@ main = defaultMain $ testGroup "memory"
         , testProperty "span (const False)" $ \(Words8 l) ->
             let b = witnessID (B.pack l)
              in B.span (const False) b == (B.empty, b)
+        , testProperty "map f == pack . Prelude.map f . unpack" $ \(Words8 l) (Positive w) ->
+            let b = witnessID (B.pack l)
+                f x = x + fromIntegral w :: Word8
+             in B.map f b == (witnessID . B.pack . Prelude.map f $ l)
         ]
