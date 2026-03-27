@@ -1,4 +1,10 @@
 ## 0.22.0
++ Added `slice :: ByteArray bs => bs -> Word -> Word -> Maybe bs`
+  and `unsafeSlice :: ByteArray bs => bs -> Word -> Word -> bs`
+  to `Data.ByteArray.Methods` (re-exported via `Data.ByteArray`).
+  Extract a sub-range `[start, end)` from a byte array. `slice` returns
+  `Nothing` for out-of-bounds indices; `unsafeSlice` clamps them.
+  Both swap indices if end < start. (closes #7)
 + Added `map :: (ByteArrayAccess ba, ByteArray ba) => (Word8 -> Word8) -> ba -> ba`
   to `Data.ByteArray.Methods` (re-exported via `Data.ByteArray`).
   Applies a function to each byte of a byte array. (closes #5)
