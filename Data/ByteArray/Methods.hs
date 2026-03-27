@@ -40,6 +40,8 @@ module Data.ByteArray.Methods
     , append
     , concat
     , map
+    , slice
+    , unsafeSlice
     ) where
 
 import           Data.ByteArray.Types
@@ -313,3 +315,28 @@ map f ba = copyAndFreeze ba $ loop 0
 -- | Convert a bytearray to another type of bytearray
 convert :: (ByteArrayAccess bin, ByteArray bout) => bin -> bout
 convert bs = inlineUnsafeCreate (length bs) (copyByteArrayToPtr bs)
+
+-- | Extract a slice from index @start@ (inclusive) to index @end@ (exclusive).
+-- Indices are swapped if @end < start@.
+-- Returns 'Nothing' if indices are out of bounds.
+slice :: ByteArray bs => bs -> Word -> Word -> Maybe bs
+slice bs start end
+    | hi > len  = Nothing
+    | otherwise = Just $ unsafeSlice bs start end
+  where
+    hi  = fromIntegral (max start end) :: Int
+    len = length bs
+
+-- | Like 'slice' but clamps out-of-bounds indices to the byte array length.
+unsafeSlice :: ByteArray bs => bs -> Word -> Word -> bs
+unsafeSlice bs start end
+    | sliceLen <= 0 = empty
+    | otherwise     = unsafeCreate sliceLen $ \d ->
+        withByteArray bs $ \s -> memCopy d (s `plusPtr` lo') sliceLen
+  where
+    lo       = fromIntegral (min start end) :: Int
+    hi       = fromIntegral (max start end) :: Int
+    len      = length bs
+    lo'      = min lo len
+    hi'      = min hi len
+    sliceLen = hi' - lo'

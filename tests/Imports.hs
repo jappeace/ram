@@ -16,7 +16,7 @@ import Test.Tasty                   as X (TestTree, testGroup, defaultMain, Test
 import Test.QuickCheck              as X
     ( Arbitrary(..), Gen, Property
     , (===), (.&&.)
-    , elements, choose, forAll, property, ioProperty
+    , elements, choose, forAll, property, ioProperty, (==>)
     , Testable
     )
 

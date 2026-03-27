@@ -252,4 +252,26 @@ main = defaultMain $ testGroup "memory"
             let b = witnessID (B.pack l)
                 f x = x + fromIntegral w :: Word8
              in B.map f b == (witnessID . B.pack . Prelude.map f $ l)
+        , testProperty "slice == Just (take len . drop start)" $ \(Words8 l) ->
+            let bs = witnessID (B.pack l)
+                len = fromIntegral (B.length bs) :: Word
+            in len > 0 ==>
+               forAll (choose (0, len)) $ \start ->
+               forAll (choose (start, len)) $ \end ->
+                 B.slice bs start end == Just (B.take (fromIntegral (end - start)) (B.drop (fromIntegral start) bs))
+        , testProperty "slice out of bounds == Nothing" $ \(Words8 l) ->
+            let bs = witnessID (B.pack l)
+                len = fromIntegral (B.length bs) :: Word
+            in B.slice bs 0 (len + 1) == Nothing
+        , testProperty "unsafeSlice clamps to valid range" $ \(Words8 l) ->
+            let bs = witnessID (B.pack l)
+                len = fromIntegral (B.length bs) :: Word
+            in B.length (B.unsafeSlice bs 0 (len + 100)) == B.length bs
+        , testProperty "slice start end == slice end start" $ \(Words8 l) ->
+            let bs = witnessID (B.pack l)
+                len = fromIntegral (B.length bs) :: Word
+            in len > 0 ==>
+               forAll (choose (0, len)) $ \a ->
+               forAll (choose (0, len)) $ \b ->
+                 B.slice bs a b == B.slice bs b a
         ]
