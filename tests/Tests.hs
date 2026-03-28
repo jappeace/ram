@@ -252,26 +252,26 @@ main = defaultMain $ testGroup "memory"
             let b = witnessID (B.pack l)
                 f x = x + fromIntegral w :: Word8
              in B.map f b == (witnessID . B.pack . Prelude.map f $ l)
-        , testProperty "slice == Just (take len . drop start)" $ \(Words8 l) ->
+        , testProperty "slice == Just (take len . drop offset)" $ \(Words8 l) ->
             let bs = witnessID (B.pack l)
-                len = fromIntegral (B.length bs) :: Word
-            in len > 0 ==>
-               forAll (choose (0, len)) $ \start ->
-               forAll (choose (start, len)) $ \end ->
-                 B.slice bs start end == Just (B.take (fromIntegral (end - start)) (B.drop (fromIntegral start) bs))
+                bsLen = B.length bs
+            in bsLen > 0 ==>
+               forAll (choose (0, bsLen)) $ \offset ->
+               forAll (choose (0, bsLen - offset)) $ \len ->
+                 B.slice bs offset len == Just (B.take len (B.drop offset bs))
         , testProperty "slice out of bounds == Nothing" $ \(Words8 l) ->
             let bs = witnessID (B.pack l)
-                len = fromIntegral (B.length bs) :: Word
-            in B.slice bs 0 (len + 1) == Nothing
-        , testProperty "unsafeSlice clamps to valid range" $ \(Words8 l) ->
+                bsLen = B.length bs
+            in B.slice bs 0 (bsLen + 1) == Nothing
+        , testProperty "slice negative offset == Nothing" $ \(Words8 l) ->
             let bs = witnessID (B.pack l)
-                len = fromIntegral (B.length bs) :: Word
-            in B.length (B.unsafeSlice bs 0 (len + 100)) == B.length bs
-        , testProperty "slice start end == slice end start" $ \(Words8 l) ->
+            in B.slice bs (-1) 0 == Nothing
+        , testProperty "slice negative length == Nothing" $ \(Words8 l) ->
             let bs = witnessID (B.pack l)
-                len = fromIntegral (B.length bs) :: Word
-            in len > 0 ==>
-               forAll (choose (0, len)) $ \a ->
-               forAll (choose (0, len)) $ \b ->
-                 B.slice bs a b == B.slice bs b a
+            in B.slice bs 0 (-1) == Nothing
+        , testCase "unsafeSlice errors on out of bounds" $ do
+            let bs = witnessID (B.pack [1,2,3,4,5])
+            assertException (B.unsafeSlice bs (-1) 1)
+            assertException (B.unsafeSlice bs 0 (-1))
+            assertException (B.unsafeSlice bs 0 (B.length bs + 1))
         ]

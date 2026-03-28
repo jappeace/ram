@@ -5,6 +5,7 @@ module Imports
     , testCase
     , assertBool
     , assertEqual
+    , assertException
     , (@?=)
     ) where
 
@@ -22,7 +23,7 @@ import Test.QuickCheck              as X
 
 import Test.Tasty.Providers         (singleTest, IsTest(..), testPassed, testFailed)
 import Test.QuickCheck              (quickCheckWithResult, stdArgs, isSuccess, Args(..))
-import Control.Exception            (SomeException, try)
+import Control.Exception            (SomeException, ErrorCall, try, evaluate)
 
 -- | QuickCheck property test provider for tasty
 newtype QCTest = QCTest Property
@@ -71,3 +72,11 @@ infix 1 @?=
 actual @?= expected
     | actual == expected = return ()
     | otherwise = fail ("expected: " ++ show expected ++ "\n but got: " ++ show actual)
+
+-- | Assert that evaluating a value throws an 'ErrorCall' exception.
+assertException :: forall a . a -> IO ()
+assertException val = do
+    r <- try (evaluate val) :: IO (Either ErrorCall a)
+    case r of
+        Left _  -> return ()
+        Right _ -> fail "expected an exception but none was thrown"
