@@ -1,4 +1,10 @@
 ## 0.22.0
++ Added `slice :: ByteArray bs => bs -> Int -> Int -> Maybe bs`
+  and `unsafeSlice :: ByteArray bs => bs -> Int -> Int -> bs`
+  to `Data.ByteArray.Methods` (re-exported via `Data.ByteArray`).
+  `slice bs offset len` extracts `len` bytes starting at `offset`.
+  Returns `Nothing` for negative offset/length or out-of-bounds access.
+  `unsafeSlice` calls `error` on invalid arguments. (closes #7)
 + Added `map :: (ByteArrayAccess ba, ByteArray ba) => (Word8 -> Word8) -> ba -> ba`
   to `Data.ByteArray.Methods` (re-exported via `Data.ByteArray`).
   Applies a function to each byte of a byte array. (closes #5)

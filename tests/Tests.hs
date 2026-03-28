@@ -252,4 +252,26 @@ main = defaultMain $ testGroup "memory"
             let b = witnessID (B.pack l)
                 f x = x + fromIntegral w :: Word8
              in B.map f b == (witnessID . B.pack . Prelude.map f $ l)
+        , testProperty "slice == Just (take len . drop offset)" $ \(Words8 l) ->
+            let bs = witnessID (B.pack l)
+                bsLen = B.length bs
+            in bsLen > 0 ==>
+               forAll (choose (0, bsLen)) $ \offset ->
+               forAll (choose (0, bsLen - offset)) $ \len ->
+                 B.slice bs offset len == Just (B.take len (B.drop offset bs))
+        , testProperty "slice out of bounds == Nothing" $ \(Words8 l) ->
+            let bs = witnessID (B.pack l)
+                bsLen = B.length bs
+            in B.slice bs 0 (bsLen + 1) == Nothing
+        , testProperty "slice negative offset == Nothing" $ \(Words8 l) ->
+            let bs = witnessID (B.pack l)
+            in B.slice bs (-1) 0 == Nothing
+        , testProperty "slice negative length == Nothing" $ \(Words8 l) ->
+            let bs = witnessID (B.pack l)
+            in B.slice bs 0 (-1) == Nothing
+        , testCase "unsafeSlice errors on out of bounds" $ do
+            let bs = witnessID (B.pack [1,2,3,4,5])
+            assertException (B.unsafeSlice bs (-1) 1)
+            assertException (B.unsafeSlice bs 0 (-1))
+            assertException (B.unsafeSlice bs 0 (B.length bs + 1))
         ]

@@ -40,6 +40,8 @@ module Data.ByteArray.Methods
     , append
     , concat
     , map
+    , slice
+    , unsafeSlice
     ) where
 
 import           Data.ByteArray.Types
@@ -313,3 +315,29 @@ map f ba = copyAndFreeze ba $ loop 0
 -- | Convert a bytearray to another type of bytearray
 convert :: (ByteArrayAccess bin, ByteArray bout) => bin -> bout
 convert bs = inlineUnsafeCreate (length bs) (copyByteArrayToPtr bs)
+
+-- | Extract @len@ bytes starting at byte @offset@.
+-- Returns 'Nothing' if @offset@ or @len@ is negative, or if @offset + len@
+-- exceeds the byte array length.
+slice :: ByteArray bs => bs -> Int -> Int -> Maybe bs
+slice bs offset len
+    | offset < 0           = Nothing
+    | len < 0              = Nothing
+    | offset + len > bsLen = Nothing
+    | otherwise            = Just $ unsafeCreate len $ \d ->
+        withByteArray bs $ \s -> memCopy d (s `plusPtr` offset) len
+  where
+    bsLen = length bs
+
+-- | Like 'slice' but calls 'error' when arguments are out of bounds.
+-- This includes negative @offset@, negative @len@, or @offset + len@
+-- exceeding the byte array length.
+unsafeSlice :: ByteArray bs => bs -> Int -> Int -> bs
+unsafeSlice bs offset len
+    | offset < 0           = error "unsafeSlice: negative offset"
+    | len < 0              = error "unsafeSlice: negative length"
+    | offset + len > bsLen = error "unsafeSlice: offset + length exceeds byte array size"
+    | otherwise            = unsafeCreate len $ \d ->
+        withByteArray bs $ \s -> memCopy d (s `plusPtr` offset) len
+  where
+    bsLen = length bs
