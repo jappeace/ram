@@ -1,4 +1,4 @@
-memory
+ram
 ======
 
 [![BSD](http://b.repl.ca/v1/license-BSD-blue.png)](http://en.wikipedia.org/wiki/BSD_licenses)
