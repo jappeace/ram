@@ -63,7 +63,7 @@ memXorWith destination !v source bytes
 
 -- | Copy a set number of bytes from @src to @dst
 memCopy :: Ptr Word8 -> Ptr Word8 -> Int -> IO ()
-memCopy dst src n = c_memcpy dst src (fromIntegral n)
+memCopy dst src n = c_memcpy dst src (fromIntegral n) >>= \_ -> return ()
 {-# INLINE memCopy #-}
 
 -- | Set @n number of bytes to the same value @v
@@ -114,7 +114,7 @@ memConstEqual p1 p2 n = loop 0 0
             loop (i+1) (acc .|. e)
 
 foreign import ccall unsafe "memset"
-    c_memset :: Ptr Word8 -> Word8 -> CSize -> IO ()
+    c_memset :: Ptr Word8 -> Word8 -> CSize -> IO (Ptr Word8)
 
 foreign import ccall unsafe "memcpy"
-    c_memcpy :: Ptr Word8 -> Ptr Word8 -> CSize -> IO ()
+    c_memcpy :: Ptr Word8 -> Ptr Word8 -> CSize -> IO (Ptr Word8)
