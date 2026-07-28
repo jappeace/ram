@@ -1,3 +1,9 @@
+## 0.22.1
++ Use correct signatures for 'memset' and 'memcpy'
+The WASM linker is more strict about function signatures matching, see https://releases.llvm.org/11.1.0/tools/lld/docs/WebAssembly.html#function-signatures
+
+thanks @clinton-grc
+
 ## 0.22.0
 + Added `slice :: ByteArray bs => bs -> Int -> Int -> Maybe bs`
   and `unsafeSlice :: ByteArray bs => bs -> Int -> Int -> bs`
